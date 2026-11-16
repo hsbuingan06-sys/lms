@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Nếp học - Hệ thống quản lý học tập & đào tạo (LMS) thân thiện cho ngành giáo dục",
   "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "dev": "pnpm --parallel --filter client --filter server dev",
     "dev:client": "pnpm --filter client dev",

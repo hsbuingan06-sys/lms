@@ -17,10 +17,14 @@ out-tsc
 # dependencies
 node_modules
 
-# Environment
+# Environment & Database
 .env
 .env.local
 *.env
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # IDEs and editors
 /.idea

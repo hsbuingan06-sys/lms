@@ -1,24 +1,107 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import path from "path";
 import * as schema from "./schema";
 
-const { Pool } = pg;
+const dbPath = process.env.DATABASE_PATH || path.resolve(process.cwd(), "lms.db");
 
-const databaseUrl = process.env.DATABASE_URL;
+export const sqlite = new Database(dbPath);
 
-if (!databaseUrl) {
-  console.warn(
-    "\n[CANH BAO] Chua tim thay bien DATABASE_URL trong file .env!\n" +
-    "He thong can ket noi toi PostgreSQL de luu tru khoa hoc va tien do hoc tap.\n" +
-    "Vui long tao file server/.env voi noi dung:\n" +
-    "DATABASE_URL=postgresql://postgres:password@localhost:5432/lms\n"
+// Tối ưu hiệu năng và kiểm tra khóa ngoại (Foreign Keys)
+sqlite.pragma("journal_mode = WAL");
+sqlite.pragma("foreign_keys = ON");
+
+// Tự động khởi tạo cấu trúc bảng SQLite nếu chưa tồn tại
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS lms_courses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL,
+    level TEXT NOT NULL,
+    duration TEXT NOT NULL,
+    lessons INTEGER NOT NULL,
+    enrolled INTEGER NOT NULL DEFAULT 0,
+    progress REAL NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'Đang hoạt động',
+    format TEXT NOT NULL DEFAULT 'Native',
+    accent TEXT NOT NULL DEFAULT 'teal',
+    instructor_name TEXT NOT NULL DEFAULT 'Cô Bui Ngan'
   );
-}
 
-export const pool = new Pool({
-  connectionString: databaseUrl || "postgresql://postgres:postgres@localhost:5432/lms",
-});
+  CREATE TABLE IF NOT EXISTS lms_learners (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    role TEXT NOT NULL DEFAULT 'student',
+    team TEXT NOT NULL,
+    points INTEGER NOT NULL DEFAULT 0,
+    streak INTEGER NOT NULL DEFAULT 0,
+    progress REAL NOT NULL DEFAULT 0,
+    active_course TEXT NOT NULL DEFAULT 'Chưa ghi danh',
+    last_active TEXT NOT NULL DEFAULT 'Chưa hoạt động'
+  );
 
-export const db = drizzle(pool, { schema });
+  CREATE TABLE IF NOT EXISTS lms_learning_paths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL,
+    courses INTEGER NOT NULL,
+    course_titles TEXT NOT NULL DEFAULT '[]',
+    duration TEXT NOT NULL,
+    completion REAL NOT NULL DEFAULT 0,
+    learners INTEGER NOT NULL DEFAULT 0,
+    accent TEXT NOT NULL DEFAULT 'teal'
+  );
+
+  CREATE TABLE IF NOT EXISTS lms_enrollments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    learner_id INTEGER NOT NULL REFERENCES lms_learners(id) ON DELETE CASCADE,
+    course_id INTEGER NOT NULL REFERENCES lms_courses(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'Đang học',
+    completed_lesson_ids TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS lms_enrollments_learner_course_unique ON lms_enrollments(learner_id, course_id);
+
+  CREATE TABLE IF NOT EXISTS lms_certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    learner TEXT NOT NULL,
+    course TEXT NOT NULL,
+    serial TEXT NOT NULL UNIQUE,
+    issued_at TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Đã cấp'
+  );
+
+  CREATE TABLE IF NOT EXISTS lms_activities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    detail TEXT NOT NULL,
+    time TEXT NOT NULL,
+    kind TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS lms_badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    learner_id INTEGER NOT NULL REFERENCES lms_learners(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    awarded_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS lms_badges_learner_name_unique ON lms_badges(learner_id, name);
+
+  CREATE TABLE IF NOT EXISTS lms_xapi_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    learner_id INTEGER NOT NULL REFERENCES lms_learners(id) ON DELETE CASCADE,
+    verb TEXT NOT NULL,
+    object_id TEXT NOT NULL,
+    score REAL NOT NULL,
+    timestamp TEXT NOT NULL,
+    raw TEXT
+  );
+`);
+
+export const db = drizzle(sqlite, { schema });
 
 export * from "./schema";

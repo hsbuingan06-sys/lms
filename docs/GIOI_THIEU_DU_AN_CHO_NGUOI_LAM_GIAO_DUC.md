@@ -91,3 +91,16 @@ Hệ thống được thiết kế theo các tiêu chuẩn quốc tế trong ng�
 | `client/` | **Giao diện trang web** | Màn hình hiển thị cho học sinh, giáo viên và ban quản lý thao tác hàng ngày. |
 | `server/` | **Bộ não lưu trữ** | Máy chủ tiếp nhận thông tin, tính toán điểm số và lưu trữ dữ liệu vào kho. |
 | `docs/` | **Tủ tài liệu** | Chứa các bài viết hướng dẫn sử dụng và tài liệu giới thiệu hệ thống. |
+
+---
+
+## 5. Dữ liệu được lưu trữ như thế nào? (Tiện ích của SQLite)
+
+Nhiều phần mềm thông thường yêu cầu phải thuê kỹ thuật viên đến cài đặt các "hệ cơ sở dữ liệu cồng kềnh" (như PostgreSQL, Oracle, SQL Server). Điều này rất rắc rối với người làm giáo dục.
+
+**Nếp học đã được tối ưu hóa với SQLite:**
+- Toàn bộ hồ sơ học viên, điểm số, khóa học và chứng chỉ được gói gọn trong **một cuốn sổ điện tử duy nhất** là file `lms.db` (nằm trong thư mục `server/`).
+- **Không cần cài đặt bất kỳ phần mềm quản lý dữ liệu nào khác.**
+- Khi bạn chạy dự án lần đầu, hệ thống sẽ tự động "in bìa và kẻ trang" cho cuốn sổ này, đồng thời tự chép sẵn các khóa học mẫu để bạn trải nghiệm ngay.
+- Muốn sao lưu dữ liệu? Bạn chỉ cần copy file `lms.db` lưu vào USB hoặc Google Drive là an tâm 100%!
+
