@@ -104,3 +104,16 @@ Nhiều phần mềm thông thường yêu cầu phải thuê kỹ thuật viên
 - Khi bạn chạy dự án lần đầu, hệ thống sẽ tự động "in bìa và kẻ trang" cho cuốn sổ này, đồng thời tự chép sẵn các khóa học mẫu để bạn trải nghiệm ngay.
 - Muốn sao lưu dữ liệu? Bạn chỉ cần copy file `lms.db` lưu vào USB hoặc Google Drive là an tâm 100%!
 
+
+---
+
+## 6. Ba Không Gian Chuyên Biệt & Tài Khoản Mẫu Trực Quan
+
+Hệ thống được thiết kế sẵn 3 góc nhìn riêng biệt và tích hợp nút chuyển đổi nhanh (Role Switcher) ngay trên góc trên màn hình:
+
+1. **Quản trị viên - Cô Ngân Bùi (Ban Giám Hiệu)**:
+   - Theo dõi toàn cảnh các chỉ số của trường, duyệt khóa học, phân quyền tài khoản và cấu hình hệ sinh thái e-Learning.
+2. **Giảng viên - Cô Bui Ngan (Tổ Sư Phạm & Đào Tạo)**:
+   - Biên soạn bài giảng, theo dõi sổ điểm và tiến độ học tập của từng học sinh trong lớp, ghi danh học sinh.
+3. **Học viên - Ngann, Bui, L (Lớp 10A & 10B)**:
+   - Tập trung vào góc học tập cá nhân: xem video bài giảng, trả lời câu hỏi trắc nghiệm, tích lũy điểm thi đua và nhận chứng chỉ tự động.

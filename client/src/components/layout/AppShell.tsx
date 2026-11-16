@@ -17,7 +17,6 @@ import {
   Users,
   X,
   LogOut,
-  LogIn,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useRole, type UserRole } from '@/contexts/RoleContext';
@@ -69,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem('lms-theme') === 'dark');
-  const { role, user, switchRole, logout, isAuthenticated } = useRole();
+  const { role, user, switchRole, logout } = useRole();
 
   const handleLogout = async () => {
     await logout();
@@ -278,34 +277,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span className="text-[10px] opacity-80">(Cô Ngân Bùi)</span>
               </button>
             </div>
-
-            <button
-              onClick={() => setDark(!dark)}
-              aria-label="Đổi giao diện"
-              className="hidden sm:grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-            >
-              {dark ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-
-            {isAuthenticated ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Đăng xuất"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition shadow-2xs"
-              >
-                <LogOut size={13} />
-                <span>Đăng xuất</span>
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 transition shadow-2xs"
-              >
-                <LogIn size={13} />
-                <span>Đăng nhập</span>
-              </Link>
-            )}
           </div>
         </header>
 
