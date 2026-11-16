@@ -1,0 +1,550 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Learning management system API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: lms
+    description: LMS dashboard, learning, and automation
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /lms/dashboard:
+    get:
+      operationId: getLmsDashboard
+      tags: [lms]
+      summary: Get dashboard overview
+      responses:
+        "200":
+          description: LMS overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /lms/access/me:
+    get:
+      operationId: getLmsCurrentAccess
+      tags: [lms]
+      summary: Get the signed-in user's LMS role
+      responses:
+        "200":
+          description: Current account access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessUser"
+        "401":
+          description: Sign-in required
+  /lms/access/users:
+    get:
+      operationId: listLmsAccessUsers
+      tags: [lms]
+      summary: List LMS accounts and their access roles
+      responses:
+        "200":
+          description: Account access list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AccessUser"
+        "403":
+          description: Administrator access required
+  /lms/access/users/{id}:
+    patch:
+      operationId: updateLmsAccessUser
+      tags: [lms]
+      summary: Update an account role or access status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessUserUpdate"
+      responses:
+        "200":
+          description: Updated account access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessUser"
+        "403":
+          description: Administrator access required
+        "404":
+          description: Account not found
+  /lms/courses:
+    get:
+      operationId: listLmsCourses
+      tags: [lms]
+      summary: List courses
+      responses:
+        "200":
+          description: Course catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createLmsCourse
+      tags: [lms]
+      summary: Create a course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+  /lms/courses/{id}:
+    patch:
+      operationId: updateLmsCourse
+      tags: [lms]
+      summary: Update a course
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: Updated course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "404":
+          description: Course not found
+    delete:
+      operationId: deleteLmsCourse
+      tags: [lms]
+      summary: Delete a course and its enrollments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Course deleted
+        "404":
+          description: Course not found
+  /lms/learners:
+    get:
+      operationId: listLmsLearners
+      tags: [lms]
+      summary: List learners
+      responses:
+        "200":
+          description: Learner directory
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Learner"
+    post:
+      operationId: createLmsLearner
+      tags: [lms]
+      summary: Create a learner profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LearnerInput"
+      responses:
+        "201":
+          description: Created learner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Learner"
+  /lms/learning-paths:
+    get:
+      operationId: listLmsLearningPaths
+      tags: [lms]
+      summary: List learning paths
+      responses:
+        "200":
+          description: Learning paths
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LearningPath"
+  /lms/enrollments/auto-enroll:
+    post:
+      operationId: autoEnrollLearners
+      tags: [lms]
+      summary: Automatically enroll learners
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnrollmentInput"
+      responses:
+        "201":
+          description: Enrollment results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnrollmentResult"
+        "404":
+          description: Course or learners not found
+  /lms/certificates:
+    get:
+      operationId: listLmsCertificates
+      tags: [lms]
+      summary: List issued certificates
+      responses:
+        "200":
+          description: Certificate records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Certificate"
+  /lms/leaderboard:
+    get:
+      operationId: getLmsLeaderboard
+      tags: [lms]
+      summary: Get learner leaderboard
+      responses:
+        "200":
+          description: Learner rankings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+  /lms/badges:
+    get:
+      operationId: listLmsBadges
+      tags: [lms]
+      summary: List learner badges
+      responses:
+        "200":
+          description: Badges earned by learners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LearnerBadge"
+  /lms/plugins:
+    get:
+      operationId: listLmsPlugins
+      tags: [lms]
+      summary: List learning plugins
+      responses:
+        "200":
+          description: Configured learning plugins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LearningPlugin"
+  /lms/progress/complete:
+    post:
+      operationId: completeLmsLesson
+      tags: [lms]
+      summary: Complete a lesson and issue a certificate when eligible
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonCompletionInput"
+      responses:
+        "200":
+          description: Progress and certificate status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonCompletionResult"
+        "400":
+          description: The learner must reach the passing score
+        "404":
+          description: Course or learner not found
+  /lms/xapi/events:
+    post:
+      operationId: recordXapiEvent
+      tags: [lms]
+      summary: Record an xAPI learning event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/XapiEventInput"
+      responses:
+        "201":
+          description: Recorded xAPI event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XapiEvent"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ActivityItem:
+      type: object
+      required: [id, title, detail, time, kind]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        detail: { type: string }
+        time: { type: string }
+        kind: { type: string, enum: [enrollment, completion, certificate, quiz] }
+    EngagementDay:
+      type: object
+      required: [day, active, completed]
+      properties:
+        day: { type: string }
+        active: { type: integer }
+        completed: { type: integer }
+    DashboardSummary:
+      type: object
+      required: [activeCourses, totalLearners, completionRate, pendingCertificates, weeklyEngagement, recentActivity]
+      properties:
+        activeCourses: { type: integer }
+        totalLearners: { type: integer }
+        completionRate: { type: number }
+        pendingCertificates: { type: integer }
+        weeklyEngagement:
+          type: array
+          items: { $ref: "#/components/schemas/EngagementDay" }
+        recentActivity:
+          type: array
+          items: { $ref: "#/components/schemas/ActivityItem" }
+    AccessUser:
+      type: object
+      required: [id, email, name, role, active, createdAt]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [admin, instructor, learner] }
+        active: { type: boolean }
+        createdAt: { type: string }
+    AccessUserUpdate:
+      type: object
+      properties:
+        role: { type: string, enum: [admin, instructor, learner] }
+        active: { type: boolean }
+    Course:
+      type: object
+      required: [id, title, description, category, level, duration, lessons, enrolled, progress, status, format, accent]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        level: { type: string, enum: [Cơ bản, Trung cấp, Nâng cao] }
+        duration: { type: string }
+        lessons: { type: integer }
+        enrolled: { type: integer }
+        progress: { type: number }
+        status: { type: string, enum: [Đang hoạt động, Bản nháp, Lưu trữ] }
+        format: { type: string, enum: [Native, SCORM 1.2, xAPI, H5P] }
+        accent: { type: string }
+    CourseInput:
+      type: object
+      required: [title, description, category, level, duration, lessons, format]
+      properties:
+        title: { type: string, minLength: 2 }
+        description: { type: string }
+        category: { type: string }
+        level: { type: string, enum: [Cơ bản, Trung cấp, Nâng cao] }
+        duration: { type: string }
+        lessons: { type: integer, minimum: 1 }
+        format: { type: string, enum: [Native, SCORM 1.2, xAPI, H5P] }
+    CourseUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 2 }
+        description: { type: string }
+        category: { type: string }
+        level: { type: string, enum: [Cơ bản, Trung cấp, Nâng cao] }
+        duration: { type: string }
+        lessons: { type: integer, minimum: 1 }
+        status: { type: string, enum: [Đang hoạt động, Bản nháp, Lưu trữ] }
+        format: { type: string, enum: [Native, SCORM 1.2, xAPI, H5P] }
+    Learner:
+      type: object
+      required: [id, name, email, team, points, streak, progress, activeCourse, lastActive]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        team: { type: string }
+        points: { type: integer }
+        streak: { type: integer }
+        progress: { type: number }
+        activeCourse: { type: string }
+        lastActive: { type: string }
+    LearnerInput:
+      type: object
+      required: [name, email, team]
+      properties:
+        name: { type: string, minLength: 2 }
+        email: { type: string, format: email }
+        team: { type: string }
+    LearningPath:
+      type: object
+      required: [id, title, description, courses, courseTitles, duration, completion, learners, accent]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        courses: { type: integer }
+        courseTitles:
+          type: array
+          items: { type: string }
+        duration: { type: string }
+        completion: { type: number }
+        learners: { type: integer }
+        accent: { type: string }
+    EnrollmentInput:
+      type: object
+      required: [courseId, learnerIds]
+      properties:
+        courseId: { type: integer }
+        learnerIds:
+          type: array
+          minItems: 1
+          items: { type: integer }
+    EnrollmentResult:
+      type: object
+      required: [enrolled, skipped, message]
+      properties:
+        enrolled: { type: integer }
+        skipped: { type: integer }
+        message: { type: string }
+    Certificate:
+      type: object
+      required: [id, learner, course, serial, issuedAt, status]
+      properties:
+        id: { type: integer }
+        learner: { type: string }
+        course: { type: string }
+        serial: { type: string }
+        issuedAt: { type: string }
+        status: { type: string, enum: [Đã cấp, Chờ cấp] }
+    LeaderboardEntry:
+      type: object
+      required: [id, name, team, points, streak, badges, rank]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        team: { type: string }
+        points: { type: integer }
+        streak: { type: integer }
+        badges: { type: integer }
+        rank: { type: integer }
+    LearnerBadge:
+      type: object
+      required: [id, learner, name, description, icon, awardedAt]
+      properties:
+        id: { type: integer }
+        learner: { type: string }
+        name: { type: string }
+        description: { type: string }
+        icon: { type: string }
+        awardedAt: { type: string }
+    LearningPlugin:
+      type: object
+      required: [id, name, description, standard, status, icon]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        standard: { type: string }
+        status: { type: string, enum: [Đang bật, Sẵn sàng, Chưa kết nối] }
+        icon: { type: string }
+    LessonCompletionInput:
+      type: object
+      required: [learnerId, courseId, lessonId, score]
+      properties:
+        learnerId: { type: integer }
+        courseId: { type: integer }
+        lessonId: { type: string }
+        score: { type: number, minimum: 0, maximum: 100 }
+    LessonCompletionResult:
+      type: object
+      required: [progress, certificateIssued, pointsAwarded]
+      properties:
+        progress: { type: number }
+        certificateIssued: { type: boolean }
+        pointsAwarded: { type: integer }
+    XapiEventInput:
+      type: object
+      required: [learnerId, verb, objectId, score]
+      properties:
+        learnerId: { type: integer }
+        verb: { type: string }
+        objectId: { type: string }
+        score: { type: number, minimum: 0, maximum: 100 }
+        raw: { type: object, additionalProperties: true }
+    XapiEvent:
+      type: object
+      required: [id, learnerId, verb, objectId, score, timestamp]
+      properties:
+        id: { type: integer }
+        learnerId: { type: integer }
+        verb: { type: string }
+        objectId: { type: string }
+        score: { type: number }
+        timestamp: { type: string }
+
