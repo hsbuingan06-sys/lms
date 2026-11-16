@@ -10,6 +10,9 @@ import {
   lmsLearningPathsTable,
   lmsXapiEventsTable,
 } from "../db";
+import { hashPassword } from "./auth";
+
+const defaultPasswordHash = hashPassword("123456");
 
 const courseSeed = [
   {
@@ -20,11 +23,12 @@ const courseSeed = [
     level: "Cơ bản",
     duration: "2 giờ 30 phút",
     lessons: 6,
-    enrolled: 128,
+    enrolled: 3,
     progress: 72,
     status: "Đang hoạt động",
     format: "H5P",
     accent: "teal",
+    instructorName: "Cô Bui Ngan",
   },
   {
     title: "Lãnh đạo đội ngũ linh hoạt",
@@ -34,11 +38,12 @@ const courseSeed = [
     level: "Nâng cao",
     duration: "4 giờ",
     lessons: 8,
-    enrolled: 86,
+    enrolled: 2,
     progress: 54,
     status: "Đang hoạt động",
     format: "SCORM 1.2",
     accent: "violet",
+    instructorName: "Cô Bui Ngan",
   },
   {
     title: "Bảo mật thông tin thực hành",
@@ -48,19 +53,46 @@ const courseSeed = [
     level: "Cơ bản",
     duration: "1 giờ 45 phút",
     lessons: 5,
-    enrolled: 214,
+    enrolled: 3,
     progress: 89,
     status: "Đang hoạt động",
     format: "xAPI",
     accent: "amber",
+    instructorName: "Cô Bui Ngan",
   },
 ];
 
 const learnerSeed = [
   {
-    name: "Minh Anh",
-    email: "minh.anh@nova.vn",
-    team: "Sản phẩm",
+    name: "Cô Ngân Bùi",
+    email: "ngan.bui@nova.vn",
+    passwordHash: defaultPasswordHash,
+    role: "admin",
+    team: "Ban Giám Hiệu",
+    points: 3200,
+    streak: 30,
+    progress: 100,
+    activeCourse: "Quản trị đào tạo",
+    lastActive: "Đang hoạt động",
+  },
+  {
+    name: "Cô Bui Ngan",
+    email: "bui.ngan@nova.vn",
+    passwordHash: defaultPasswordHash,
+    role: "lecturer",
+    team: "Tổ Sư Phạm & Đào Tạo",
+    points: 2800,
+    streak: 25,
+    progress: 95,
+    activeCourse: "Hội nhập cùng Nova",
+    lastActive: "Hôm nay, 10:15",
+  },
+  {
+    name: "Ngann",
+    email: "ngann@nova.vn",
+    passwordHash: defaultPasswordHash,
+    role: "student",
+    team: "Lớp 10A",
     points: 1840,
     streak: 12,
     progress: 82,
@@ -68,9 +100,11 @@ const learnerSeed = [
     lastActive: "Hôm nay, 09:42",
   },
   {
-    name: "Quang Huy",
-    email: "quang.huy@nova.vn",
-    team: "Kinh doanh",
+    name: "Bui",
+    email: "bui@nova.vn",
+    passwordHash: defaultPasswordHash,
+    role: "student",
+    team: "Lớp 10A",
     points: 1620,
     streak: 8,
     progress: 76,
@@ -78,34 +112,16 @@ const learnerSeed = [
     lastActive: "Hôm nay, 08:15",
   },
   {
-    name: "Thu Hà",
-    email: "thu.ha@nova.vn",
-    team: "Nhân sự",
+    name: "L",
+    email: "l@nova.vn",
+    passwordHash: defaultPasswordHash,
+    role: "student",
+    team: "Lớp 10B",
     points: 1480,
     streak: 16,
     progress: 91,
     activeCourse: "Bảo mật thông tin thực hành",
     lastActive: "Hôm qua, 16:30",
-  },
-  {
-    name: "Đức Thành",
-    email: "duc.thanh@nova.vn",
-    team: "Công nghệ",
-    points: 1260,
-    streak: 5,
-    progress: 64,
-    activeCourse: "Hội nhập cùng Nova",
-    lastActive: "Hôm qua, 14:08",
-  },
-  {
-    name: "Lan Phương",
-    email: "lan.phuong@nova.vn",
-    team: "Thiết kế",
-    points: 980,
-    streak: 3,
-    progress: 48,
-    activeCourse: "Bảo mật thông tin thực hành",
-    lastActive: "Thứ Hai, 11:24",
   },
 ];
 
@@ -165,8 +181,16 @@ async function seedLmsData(): Promise<void> {
     .limit(1);
   if (existing.length > 0) {
     const learners = await db
-      .select({ id: lmsLearnersTable.id })
+      .select({ id: lmsLearnersTable.id, passwordHash: lmsLearnersTable.passwordHash })
       .from(lmsLearnersTable);
+    for (const l of learners) {
+      if (!l.passwordHash) {
+        await db
+          .update(lmsLearnersTable)
+          .set({ passwordHash: defaultPasswordHash })
+          .where(eq(lmsLearnersTable.id, l.id));
+      }
+    }
     await ensureXapiSampleEvents(learners);
     const paths = await db.select().from(lmsLearningPathsTable);
     for (const path of paths) {
@@ -194,7 +218,7 @@ async function seedLmsData(): Promise<void> {
       ],
       duration: "6 giờ",
       completion: 78,
-      learners: 42,
+      learners: 3,
       accent: "teal",
     },
     {
@@ -208,7 +232,7 @@ async function seedLmsData(): Promise<void> {
       ],
       duration: "12 giờ",
       completion: 46,
-      learners: 28,
+      learners: 2,
       accent: "violet",
     },
     {
@@ -218,7 +242,7 @@ async function seedLmsData(): Promise<void> {
       courseTitles: ["Bảo mật thông tin thực hành"],
       duration: "5 giờ",
       completion: 91,
-      learners: 116,
+      learners: 3,
       accent: "amber",
     },
   ]);
@@ -226,30 +250,27 @@ async function seedLmsData(): Promise<void> {
   const courses = await db.select().from(lmsCoursesTable);
   const learners = await db.select().from(lmsLearnersTable);
   const courseIds = new Map(courses.map((course) => [course.title, course.id]));
-  const learnerIds = new Map(learners.map((learner) => [learner.email, learner.id]));
+  const learnerIds = new Map(learners.map((learner) => [learner.name, learner.id]));
 
   const onboardingId = courseIds.get("Hội nhập cùng Nova");
   const leadershipId = courseIds.get("Lãnh đạo đội ngũ linh hoạt");
   const securityId = courseIds.get("Bảo mật thông tin thực hành");
-  const minhAnhId = learnerIds.get("minh.anh@nova.vn");
-  const quangHuyId = learnerIds.get("quang.huy@nova.vn");
-  const thuHaId = learnerIds.get("thu.ha@nova.vn");
-  const ducThanhId = learnerIds.get("duc.thanh@nova.vn");
+  const ngannId = learnerIds.get("Ngann");
+  const buiId = learnerIds.get("Bui");
+  const lId = learnerIds.get("L");
 
   if (
     onboardingId !== undefined &&
     leadershipId !== undefined &&
     securityId !== undefined &&
-    minhAnhId !== undefined &&
-    quangHuyId !== undefined &&
-    thuHaId !== undefined &&
-    ducThanhId !== undefined
+    ngannId !== undefined &&
+    buiId !== undefined &&
+    lId !== undefined
   ) {
     await db.insert(lmsEnrollmentsTable).values([
-      { learnerId: minhAnhId, courseId: onboardingId, completedLessonIds: ["intro", "culture"] },
-      { learnerId: quangHuyId, courseId: leadershipId, completedLessonIds: ["lead-1", "lead-2"] },
-      { learnerId: thuHaId, courseId: securityId, completedLessonIds: ["secure-1", "secure-2", "secure-3", "secure-4"] },
-      { learnerId: ducThanhId, courseId: onboardingId, completedLessonIds: ["intro"] },
+      { learnerId: ngannId, courseId: onboardingId, completedLessonIds: ["intro", "culture"] },
+      { learnerId: buiId, courseId: leadershipId, completedLessonIds: ["lead-1", "lead-2"] },
+      { learnerId: lId, courseId: securityId, completedLessonIds: ["secure-1", "secure-2", "secure-3", "secure-4"] },
     ]);
   }
 
@@ -257,96 +278,88 @@ async function seedLmsData(): Promise<void> {
 
   await db.insert(lmsCertificatesTable).values([
     {
-      learner: "Thu Hà",
-      course: "Quy tắc ứng xử nơi làm việc",
+      learner: "L",
+      course: "Bảo mật thông tin thực hành",
       serial: "NOVA-2026-00124",
-      issuedAt: "2026-10-28",
+      issuedAt: "2026-11-10",
       status: "Đã cấp",
     },
     {
-      learner: "Minh Anh",
-      course: "Tư duy lấy khách hàng làm trọng tâm",
+      learner: "Ngann",
+      course: "Hội nhập cùng Nova",
       serial: "NOVA-2026-00123",
-      issuedAt: "2026-10-27",
+      issuedAt: "2026-11-08",
       status: "Đã cấp",
     },
     {
-      learner: "Quang Huy",
-      course: "An toàn thông tin cơ bản",
+      learner: "Bui",
+      course: "Lãnh đạo đội ngũ linh hoạt",
       serial: "NOVA-2026-00122",
-      issuedAt: "2026-10-24",
+      issuedAt: "2026-11-05",
       status: "Đã cấp",
     },
   ]);
 
   if (
-    minhAnhId !== undefined &&
-    quangHuyId !== undefined &&
-    thuHaId !== undefined &&
-    ducThanhId !== undefined
+    ngannId !== undefined &&
+    buiId !== undefined &&
+    lId !== undefined
   ) {
     await db.insert(lmsBadgesTable).values([
       {
-        learnerId: minhAnhId,
+        learnerId: ngannId,
         name: "Bứt phá tuần đầu",
         description: "Hoàn thành 5 bài học đầu tiên.",
         icon: "sparkles",
         awardedAt: "2026-11-02",
       },
       {
-        learnerId: minhAnhId,
+        learnerId: ngannId,
         name: "Người học bền bỉ",
         description: "Duy trì chuỗi học tập 7 ngày.",
         icon: "flame",
         awardedAt: "2026-11-05",
       },
       {
-        learnerId: quangHuyId,
+        learnerId: buiId,
         name: "Tư duy dẫn dắt",
         description: "Hoàn thành lộ trình quản lý.",
         icon: "compass",
         awardedAt: "2026-10-29",
       },
       {
-        learnerId: thuHaId,
+        learnerId: lId,
         name: "Chuyên gia an toàn",
         description: "Đạt điểm tối đa trong bài kiểm tra tuân thủ.",
         icon: "shield",
         awardedAt: "2026-10-26",
-      },
-      {
-        learnerId: ducThanhId,
-        name: "Người học chủ động",
-        description: "Bắt đầu lộ trình học đầu tiên.",
-        icon: "rocket",
-        awardedAt: "2026-10-21",
       },
     ]);
   }
 
   await db.insert(lmsActivitiesTable).values([
     {
-      title: "Thu Hà vừa hoàn thành khóa học",
-      detail: "Quy tắc ứng xử nơi làm việc · Chứng chỉ đã cấp",
+      title: "L vừa hoàn thành khóa học",
+      detail: "Bảo mật thông tin thực hành · Chứng chỉ đã cấp",
       time: "12 phút trước",
       kind: "certificate",
     },
     {
-      title: "18 học viên mới được ghi danh",
-      detail: "Lộ trình Khởi đầu vững vàng",
-      time: "1 giờ trước",
-      kind: "enrollment",
+      title: "Cô Bui Ngan vừa cập nhật bài giảng",
+      detail: "Hội nhập cùng Nova · 6 bài học",
+      time: "45 phút trước",
+      kind: "quiz",
     },
     {
-      title: "Minh Anh đạt huy hiệu mới",
-      detail: "Bứt phá tuần đầu · 120 điểm",
-      time: "3 giờ trước",
+      title: "Ngann đạt huy hiệu mới",
+      detail: "Người học bền bỉ · 120 điểm",
+      time: "2 giờ trước",
       kind: "completion",
     },
     {
-      title: "Bài kiểm tra vừa được cập nhật",
-      detail: "Bảo mật thông tin thực hành · H5P",
-      time: "Hôm qua",
+      title: "Bui vừa nộp câu trả lời Quiz",
+      detail: "Lãnh đạo đội ngũ linh hoạt · 100 điểm",
+      time: "3 giờ trước",
       kind: "quiz",
     },
   ]);

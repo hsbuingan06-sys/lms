@@ -1,0 +1,12 @@
+export { default as Dashboard } from './Dashboard';
+export { default as Courses } from './Courses';
+export { default as Learners } from './Learners';
+export { default as Paths } from './Paths';
+export { default as Certificates } from './Certificates';
+export { default as Leaderboard } from './Leaderboard';
+export { default as Gamification } from './Gamification';
+export { default as LearningPortal } from './LearningPortal';
+export { default as Plugins } from './Plugins';
+export { default as Login } from './Login';
+export { default as Signup } from './Signup';
+export { default as NotFound } from './not-found';

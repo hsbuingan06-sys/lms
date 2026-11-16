@@ -112,7 +112,7 @@ router.get("/lms/courses", async (_req, res): Promise<void> => {
     .select()
     .from(lmsCoursesTable)
     .orderBy(desc(lmsCoursesTable.id));
-  res.json(ListLmsCoursesResponse.parse(courses));
+  res.json(courses);
 });
 
 router.post("/lms/courses", async (req, res): Promise<void> => {
@@ -122,6 +122,9 @@ router.post("/lms/courses", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const instructorName = typeof req.body.instructorName === "string" && req.body.instructorName.trim()
+    ? req.body.instructorName.trim()
+    : "Cô Bui Ngan";
   const [course] = await db
     .insert(lmsCoursesTable)
     .values({
@@ -130,9 +133,10 @@ router.post("/lms/courses", async (req, res): Promise<void> => {
       enrolled: 0,
       progress: 0,
       accent: courseAccents[(parsed.data.title.length + parsed.data.lessons) % courseAccents.length]!,
+      instructorName,
     })
     .returning();
-  res.status(201).json(CreateLmsCourseResponse.parse(course));
+  res.status(201).json(course);
 });
 
 router.patch("/lms/courses/:id", async (req, res): Promise<void> => {
@@ -147,16 +151,20 @@ router.patch("/lms/courses/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const updateData: Record<string, unknown> = { ...parsed.data };
+  if (typeof req.body.instructorName === "string") {
+    updateData.instructorName = req.body.instructorName;
+  }
   const [course] = await db
     .update(lmsCoursesTable)
-    .set(parsed.data)
+    .set(updateData)
     .where(eq(lmsCoursesTable.id, params.data.id))
     .returning();
   if (!course) {
     res.status(404).json({ error: "Không tìm thấy khóa học." });
     return;
   }
-  res.json(UpdateLmsCourseResponse.parse(course));
+  res.json(course);
 });
 
 router.get("/lms/learners", async (_req, res): Promise<void> => {
@@ -165,7 +173,33 @@ router.get("/lms/learners", async (_req, res): Promise<void> => {
     .select()
     .from(lmsLearnersTable)
     .orderBy(desc(lmsLearnersTable.points));
-  res.json(ListLmsLearnersResponse.parse(learners));
+  res.json(learners);
+});
+
+router.patch("/lms/learners/:id/role", async (req, res): Promise<void> => {
+  await ensureLmsSeeded();
+  const id = Number(req.params.id);
+  const { role } = req.body;
+  if (!["student", "lecturer", "admin"].includes(role)) {
+    res.status(400).json({ error: "Vai trò không hợp lệ. Chọn: student, lecturer, admin." });
+    return;
+  }
+  const [updated] = await db
+    .update(lmsLearnersTable)
+    .set({ role })
+    .where(eq(lmsLearnersTable.id, id))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Không tìm thấy người dùng." });
+    return;
+  }
+  await db.insert(lmsActivitiesTable).values({
+    title: `Phân quyền người dùng: ${updated.name}`,
+    detail: `Vai trò mới: ${role === "admin" ? "Quản trị viên" : role === "lecturer" ? "Giảng viên" : "Học viên"}`,
+    time: "Vừa xong",
+    kind: "enrollment",
+  });
+  res.json(updated);
 });
 
 router.get("/lms/learning-paths", async (_req, res): Promise<void> => {

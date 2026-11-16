@@ -33,6 +33,7 @@ sqlite.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
+    password_hash TEXT,
     role TEXT NOT NULL DEFAULT 'student',
     team TEXT NOT NULL,
     points INTEGER NOT NULL DEFAULT 0,
@@ -100,7 +101,19 @@ sqlite.exec(`
     timestamp TEXT NOT NULL,
     raw TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS lms_sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES lms_learners(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    expires_at TEXT NOT NULL
+  );
 `);
+
+// Tự động nâng cấp bảng nếu database đã tồn tại từ trước
+try { sqlite.exec("ALTER TABLE lms_courses ADD COLUMN instructor_name TEXT NOT NULL DEFAULT 'Cô Bui Ngan'"); } catch {}
+try { sqlite.exec("ALTER TABLE lms_learners ADD COLUMN role TEXT NOT NULL DEFAULT 'student'"); } catch {}
+try { sqlite.exec("ALTER TABLE lms_learners ADD COLUMN password_hash TEXT"); } catch {}
 
 export const db = drizzle(sqlite, { schema });
 

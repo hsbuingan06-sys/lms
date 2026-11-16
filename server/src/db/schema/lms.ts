@@ -28,6 +28,7 @@ export const lmsLearnersTable = sqliteTable("lms_learners", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  passwordHash: text("password_hash"),
   role: text("role").notNull().default("student"),
   team: text("team").notNull(),
   points: integer("points").notNull().default(0),
@@ -35,6 +36,17 @@ export const lmsLearnersTable = sqliteTable("lms_learners", {
   progress: real("progress").notNull().default(0),
   activeCourse: text("active_course").notNull().default("Chưa ghi danh"),
   lastActive: text("last_active").notNull().default("Chưa hoạt động"),
+});
+
+export const lmsSessionsTable = sqliteTable("lms_sessions", {
+  token: text("token").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => lmsLearnersTable.id, { onDelete: "cascade" }),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  expiresAt: text("expires_at").notNull(),
 });
 
 export const lmsLearningPathsTable = sqliteTable("lms_learning_paths", {
@@ -160,4 +172,5 @@ export type LmsEnrollment = typeof lmsEnrollmentsTable.$inferSelect;
 export type LmsCertificate = typeof lmsCertificatesTable.$inferSelect;
 export type LmsBadge = typeof lmsBadgesTable.$inferSelect;
 export type LmsXapiEvent = typeof lmsXapiEventsTable.$inferSelect;
+export type LmsSession = typeof lmsSessionsTable.$inferSelect;
 export type LmsCourseInput = typeof lmsCoursesTable.$inferInsert;
